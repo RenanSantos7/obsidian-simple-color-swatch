@@ -1,8 +1,9 @@
 .scs-swatch {
+	--swatch-size: 1em;
 	display: inline-block;
-	width: 0.85em;
-	height: 0.85em;
-	border-radius: 3px;
+	width: var(--swatch-size);
+	height: var(--swatch-size);
+	border-radius: var(--radius-s);
 	border: 1px solid var(--background-modifier-border);
 	margin-inline-end: 0.25em;
 	vertical-align: -0.1em;

@@ -82,15 +82,18 @@ function buildDecorations(
 			from,
 			to,
 			enter(node) {
-				if (node.name !== 'InlineCode') return;
+				if (node.name.toLowerCase() !== 'inlinecode') return;
 				inlineCodeRanges.push({ from: node.from, to: node.to });
 
-				const first = node.node.firstChild;
-				const last = node.node.lastChild;
-				if (!first || !last) return;
+				const nodeText = view.state.doc.sliceString(node.from, node.to);
+				const opening = nodeText.match(/^`+/)?.[0];
+				const closing = nodeText.match(/`+$/)?.[0];
+				if (!opening || !closing || opening.length + closing.length > nodeText.length) {
+					return;
+				}
 
-				const contentFrom = first.to; // after the opening backtick run
-				const contentTo = last.from; // before the closing backtick run
+				const contentFrom = node.from + opening.length;
+				const contentTo = node.to - closing.length;
 				if (contentFrom >= contentTo) return;
 
 				const content = view.state.doc.sliceString(contentFrom, contentTo);
