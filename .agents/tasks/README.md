@@ -5,7 +5,7 @@ Derived from the "Steps" in `.agents/PLAN.md`. The plan is the source of truth f
 | # | Task | Plan steps | Depends on | Status |
 |---|------|-----------|------------|--------|
 | 01 | [Scaffold from sample plugin](01-scaffold.md) | 1 | — | done |
-| 02 | [Color detection + unit tests](02-color-detection.md) | 2 | 01 | todo |
+| 02 | [Color detection + unit tests](02-color-detection.md) | 2 | 01 | done |
 | 03 | [Live Preview swatches](03-live-preview.md) | 3, 6 | 02 | todo |
 | 04 | [Reading mode swatches](04-reading-mode.md) | 4 | 02 | todo |
 | 05 | [Settings tab](05-settings.md) | 5, 7 | 03, 04 | todo |
