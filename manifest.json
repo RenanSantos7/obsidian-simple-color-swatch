@@ -1,0 +1,9 @@
+{
+	"id": "simple-color-swatch",
+	"name": "Simple Color Swatch",
+	"version": "1.0.0",
+	"minAppVersion": "1.13.0",
+	"description": "Shows a color swatch next to CSS color codes, like VS Code.",
+	"author": "RenanSantos7",
+	"isDesktopOnly": false
+}
