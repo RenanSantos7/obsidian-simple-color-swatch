@@ -2,6 +2,12 @@ import { MarkdownPostProcessorContext } from 'obsidian';
 import { findRenderedTextColors, matchInlineColor } from '../colors/detect';
 import { isValidCssColor } from '../colors/validate';
 
+export interface ReadingColorSwatchOptions {
+	enabled: boolean;
+	hex: boolean;
+	functions: boolean;
+}
+
 function hasSwatch(element: Element): boolean {
 	return element.querySelector('.scs-swatch') !== null;
 }
@@ -12,21 +18,33 @@ function createSwatch(color: string): HTMLSpanElement {
 	return swatch;
 }
 
-function processInlineCode(root: HTMLElement): void {
+function processInlineCode(
+	root: HTMLElement,
+	options: ReadingColorSwatchOptions,
+): void {
 	for (const code of Array.from(root.querySelectorAll('code'))) {
 		if (code.closest('pre') || hasSwatch(code)) continue;
 
-		const color = matchInlineColor(code.textContent ?? '');
+		const color = matchInlineColor(code.textContent ?? '', {
+			hex: options.hex,
+			functions: options.functions,
+		});
 		if (!color || !isValidCssColor(color)) continue;
 		code.insertBefore(createSwatch(color), code.firstChild);
 	}
 }
 
-function processTextNode(textNode: Text): void {
+function processTextNode(
+	textNode: Text,
+	options: ReadingColorSwatchOptions,
+): void {
 	const parent = textNode.parentElement;
 	if (!parent) return;
 
-	const matches = findRenderedTextColors(textNode.data)
+	const matches = findRenderedTextColors(textNode.data, {
+		hex: options.hex,
+		functions: options.functions,
+	})
 		.filter((match) => isValidCssColor(match.color))
 		.reverse();
 
@@ -37,7 +55,7 @@ function processTextNode(textNode: Text): void {
 	}
 }
 
-function processText(root: HTMLElement): void {
+function processText(root: HTMLElement, options: ReadingColorSwatchOptions): void {
 	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 	const textNodes: Text[] = [];
 	let current: Node | null;
@@ -56,12 +74,16 @@ function processText(root: HTMLElement): void {
 		textNodes.push(textNode);
 	}
 
-	for (const textNode of textNodes) processTextNode(textNode);
+	for (const textNode of textNodes) processTextNode(textNode, options);
 }
 
-export function createReadingModePostProcessor() {
+export function createReadingModePostProcessor(
+	getOptions: () => ReadingColorSwatchOptions,
+) {
 	return (root: HTMLElement, _context: MarkdownPostProcessorContext): void => {
-		processInlineCode(root);
-		processText(root);
+		const options = getOptions();
+		if (!options.enabled) return;
+		processInlineCode(root, options);
+		processText(root, options);
 	};
 }

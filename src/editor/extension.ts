@@ -1,6 +1,6 @@
 import { App, MarkdownView } from 'obsidian';
 import { syntaxTree } from '@codemirror/language';
-import { RangeSetBuilder } from '@codemirror/state';
+import { Compartment, RangeSetBuilder } from '@codemirror/state';
 import {
 	Decoration,
 	DecorationSet,
@@ -11,6 +11,14 @@ import {
 } from '@codemirror/view';
 import { findEditorTextColors, matchInlineColor } from '../colors/detect';
 import { isValidCssColor } from '../colors/validate';
+
+export interface EditorColorSwatchOptions {
+	enabled: boolean;
+	hex: boolean;
+	functions: boolean;
+}
+
+const editorCompartment = new Compartment();
 
 class SwatchWidget extends WidgetType {
 	constructor(readonly color: string) {
@@ -57,8 +65,12 @@ function isLivePreview(app: App, editorView: EditorView): boolean {
 	return false;
 }
 
-function buildDecorations(app: App, view: EditorView): DecorationSet {
-	if (!isLivePreview(app, view)) return Decoration.none;
+function buildDecorations(
+	app: App,
+	view: EditorView,
+	options: EditorColorSwatchOptions,
+): DecorationSet {
+	if (!options.enabled || !isLivePreview(app, view)) return Decoration.none;
 
 	const widgets: { pos: number; deco: Decoration }[] = [];
 
@@ -81,7 +93,10 @@ function buildDecorations(app: App, view: EditorView): DecorationSet {
 				if (contentFrom >= contentTo) return;
 
 				const content = view.state.doc.sliceString(contentFrom, contentTo);
-				const color = matchInlineColor(content);
+				const color = matchInlineColor(content, {
+					hex: options.hex,
+					functions: options.functions,
+				});
 				if (!color || !isValidCssColor(color)) return;
 
 				const leading = content.length - content.trimStart().length;
@@ -97,7 +112,10 @@ function buildDecorations(app: App, view: EditorView): DecorationSet {
 
 		// Plain text: escaped hex + color functions (validated, not in inline code).
 		const text = view.state.doc.sliceString(from, to);
-		for (const match of findEditorTextColors(text)) {
+		for (const match of findEditorTextColors(text, {
+			hex: options.hex,
+			functions: options.functions,
+		})) {
 			if (!isValidCssColor(match.color)) continue;
 			const absFrom = from + match.from;
 			const absTo = from + match.to;
@@ -123,7 +141,10 @@ function buildDecorations(app: App, view: EditorView): DecorationSet {
 	return builder.finish();
 }
 
-export function createColorSwatchExtension(app: App) {
+function createViewPlugin(
+	app: App,
+	getOptions: () => EditorColorSwatchOptions,
+) {
 	return ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet;
@@ -132,7 +153,7 @@ export function createColorSwatchExtension(app: App) {
 			constructor(view: EditorView) {
 				this.livePreview = isLivePreview(app, view);
 				this.decorations = this.livePreview
-					? buildDecorations(app, view)
+					? buildDecorations(app, view, getOptions())
 					: Decoration.none;
 			}
 
@@ -140,15 +161,35 @@ export function createColorSwatchExtension(app: App) {
 				const livePreview = isLivePreview(app, update.view);
 				const modeChanged = livePreview !== this.livePreview;
 				this.livePreview = livePreview;
-				if (!livePreview) {
+				if (!livePreview || !getOptions().enabled) {
 					this.decorations = Decoration.none;
 					return;
 				}
 				if (update.docChanged || update.viewportChanged || modeChanged) {
-					this.decorations = buildDecorations(app, update.view);
+					this.decorations = buildDecorations(app, update.view, getOptions());
 				}
 			}
 		},
 		{ decorations: (value) => value.decorations },
 	);
+}
+
+export function createColorSwatchExtension(
+	app: App,
+	getOptions: () => EditorColorSwatchOptions,
+) {
+	return editorCompartment.of(createViewPlugin(app, getOptions));
+}
+
+export function refreshColorSwatchEditors(
+	app: App,
+	getOptions: () => EditorColorSwatchOptions,
+): void {
+	for (const leaf of app.workspace.getLeavesOfType('markdown')) {
+		if (!(leaf.view instanceof MarkdownView)) continue;
+		const cm = (leaf.view.editor as unknown as EditorWithCm).cm;
+		cm?.dispatch({
+			effects: editorCompartment.reconfigure(createViewPlugin(app, getOptions)),
+		});
+	}
 }
