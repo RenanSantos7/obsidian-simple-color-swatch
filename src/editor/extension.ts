@@ -30,7 +30,8 @@ class SwatchWidget extends WidgetType {
 	}
 
 	toDOM(): HTMLElement {
-		const swatch = createSpan({ cls: 'scs-swatch' });
+		const swatch = document.createElement('span');
+		swatch.className = 'scs-swatch';
 		swatch.style.backgroundColor = this.color;
 		return swatch;
 	}
