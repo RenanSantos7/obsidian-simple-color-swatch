@@ -8,11 +8,11 @@ Color swatches render in reading mode per the recognition rules.
 
 ## Checklist
 
-- [ ] Create `src/reading/postprocessor.ts` and register it in `main.ts` via `this.registerMarkdownPostProcessor()`:
-  - [ ] `<code>` elements: if `matchInlineColor(textContent)` returns a color, insert a `.scs-swatch` span before the content (validate with `isValidCssColor`).
-  - [ ] Walk text nodes with a `TreeWalker` (`NodeFilter.SHOW_TEXT`), skipping any node whose ancestor matches `code, pre, a.tag, .tag`.
-  - [ ] In each remaining text node, find colors with `findRenderedTextColors` (unescaped hex allowed — the `\#` escape was already consumed by the renderer), validate, and insert a `.scs-swatch` span before each match (split the text node; process matches right-to-left or rebuild the fragment).
-- [ ] `pnpm build`, `pnpm lint`, `node ./install.mjs` pass.
+- [x] Create `src/reading/postprocessor.ts` and register it in `main.ts` via `this.registerMarkdownPostProcessor()`:
+  - [x] `<code>` elements: if `matchInlineColor(textContent)` returns a color, insert a `.scs-swatch` span before the content (validate with `isValidCssColor`).
+  - [x] Walk text nodes with a `TreeWalker` (`NodeFilter.SHOW_TEXT`), skipping any node whose ancestor matches `code, pre, a.tag, .tag`.
+  - [x] In each remaining text node, find colors with `findRenderedTextColors` (unescaped hex allowed — the `\#` escape was already consumed by the renderer), validate, and insert a `.scs-swatch` span before each match (split the text node; process matches right-to-left or rebuild the fragment).
+- [x] `pnpm build`, `pnpm lint`, `node ./install.mjs` pass.
 
 ## Notes
 
@@ -24,10 +24,10 @@ Color swatches render in reading mode per the recognition rules.
 
 In reading mode, swatches appear for:
 
-- [ ] `` `#fff` `` (inline code with only the color)
-- [ ] `\#ff0000` in the source (renders as `#ff0000`)
-- [ ] `rgb(255, 0, 0)` in plain text
+- [x] `` `#fff` `` (inline code with only the color)
+- [x] `\#ff0000` in the source (renders as `#ff0000`)
+- [x] `rgb(255, 0, 0)` in plain text
 
 In reading mode, swatches do not appear for:
-- [ ] Tag `#abc` (renders as a normal tag, no swatch)
-- [ ] Colors inside fenced code blocks (```)
+- [x] Tag `#abc` (renders as a normal tag, no swatch)
+- [x] Colors inside fenced code blocks (```)
