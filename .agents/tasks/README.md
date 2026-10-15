@@ -9,7 +9,7 @@ Derived from the "Steps" in `.agents/PLAN.md`. The plan is the source of truth f
 | 03 | [Live Preview swatches](03-live-preview.md) | 3, 6 | 02 | done |
 | 04 | [Reading mode swatches](04-reading-mode.md) | 4 | 02 | done |
 | 05 | [Settings tab](05-settings.md) | 5, 7 | 03, 04 | done |
-| 06 | [Docs + final verification](06-docs-verification.md) | 8, 9 | 05 | todo |
+| 06 | [Docs + final verification](06-docs-verification.md) | 8, 9 | 05 | done |
 
 ## Conventions
 
