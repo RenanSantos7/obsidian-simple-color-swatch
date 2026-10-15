@@ -1,2 +1,9 @@
-/* Simple Color Swatch styles.
-   Swatch styles (.scs-swatch) are added in task 03. */
+.scs-swatch {
+	display: inline-block;
+	width: 0.85em;
+	height: 0.85em;
+	border-radius: 3px;
+	border: 1px solid var(--background-modifier-border);
+	margin-inline-end: 0.25em;
+	vertical-align: -0.1em;
+}
