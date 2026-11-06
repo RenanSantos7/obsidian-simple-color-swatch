@@ -18,11 +18,12 @@ Obsidian plugin that shows a colored square (swatch) right before color codes, i
 
 | Context | Hex | Functions |
 |---|---|---|
-| Inline code containing **only** the color (`` `#fff` ``) | ✔ | ✔ |
+| Inline code (`` `#fff` `` or `` `color: #ff0000` ``) | ✔ | ✔ |
+| Fenced or indented code blocks | ✔ | ✔ |
 | Plain text with escaped `#` (`\#ff0000`) | ✔ | — |
 | Plain text without escape | ✘ (avoids tag conflict) | ✔ |
 
-Rationale: `#abc` is a valid Obsidian tag and also a valid hex color. Restricting hex to pure inline code or escaped `#` eliminates the conflict.
+Rationale: `#abc` is a valid Obsidian tag and also a valid hex color. In plain text, hex still requires an escaped `#`; code contexts can safely recognize unescaped hex values.
 
 ## Architecture
 
@@ -53,9 +54,9 @@ Regexes find *candidates*; the real validation uses `CSS.supports('color', value
 ### Editor / Live Preview (`editor/extension.ts`)
 
 - `ViewPlugin` from `@codemirror/view` iterating over `visibleRanges`
-- Uses the `syntaxTree` to find `InlineCode` nodes (robust, no backtick regex) and tests whether the inner content is *exactly* a color
+- Uses the `syntaxTree` to find `InlineCode`, `FencedCode`, and `CodeBlock` nodes (robust, no backtick regex) and scans their code content for colors
 - Regex over visible text for escaped `\#hex` and functions in plain text
-- `Decoration.widget({ side: -1 })` with a `WidgetType` rendering `<span class="scs-swatch">` with `background-color` — inserted right before the code, without modifying the document
+- `Decoration.widget({ side: -1 })` with a `WidgetType` rendering `<span class="scs-swatch">` with `background-color` — inserted right before each color, without modifying the document
 - **Live Preview only**: in Source mode the extension produces no decorations (guard on the view's mode, re-checked on every update)
 - Rebuild on `docChanged`/`viewportChanged`; registered via `this.registerEditorExtension()`
 
@@ -63,8 +64,8 @@ Regexes find *candidates*; the real validation uses `CSS.supports('color', value
 
 `registerMarkdownPostProcessor` that:
 
-- In `<code>` elements: if the content is only a color → insert the swatch
-- In text nodes (via TreeWalker, **skipping** `code`, `pre` and `.tag`): decorate `#hex` and functions
+- In `<code>` and standalone `<pre>` elements: scan code text nodes for hex colors and CSS functions
+- In other text nodes (via TreeWalker, **skipping** `code`, `pre` and `.tag`): decorate `#hex` and functions
 - Detail: in reading mode the `\#` escape has already been consumed by the renderer and tags become `<a class="tag">` elements — skipping `.tag` naturally preserves the escape semantics
 - Accepted edge case: digit-only hex (`#123456`) in plain reading-mode text is not a valid Obsidian tag and will be decorated (impossible to know whether it was escaped)
 
@@ -78,7 +79,7 @@ Toggles for: editing mode, reading mode, hex, functions. Refresh decorations via
 - Conventional commits with gitmoji (`flag: :gitmoji: message`)
 - README.md in English (Obsidian standard), AGENTS.md
 - No i18n in this project
-- `install.mjs` copied/adapted from search-insert-image-obsidian-plugin (git-ignored, uses the `OBSIDIAN` env var)
+- `install.mjs` copied/adapted from search-insert-image-obsidian-plugin (git-ignored, reads `OBSIDIAN` from `.env` or the shell environment)
 - `manifest.json`: `isDesktopOnly: false`, `minAppVersion: "1.13.0"` (declarative settings API)
 
 ## Steps
@@ -98,7 +99,6 @@ Execution is tracked in `.agents/tasks/` — tasks group these steps into units 
 ## Out of scope (v1)
 
 - CSS named colors
-- Fenced code blocks (```)
 - Frontmatter / Properties
 - Color picker on swatch click
 

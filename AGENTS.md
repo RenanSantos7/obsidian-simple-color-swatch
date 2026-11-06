@@ -8,7 +8,6 @@ esbuild, and pnpm. The design source of truth is
 ## Commands
 
 ```bash
-pnpm install
 pnpm dev
 pnpm build
 pnpm lint
@@ -16,8 +15,7 @@ pnpm test
 node ./install.mjs
 ```
 
-The install script copies the compiled plugin files to the test vault or to
-the vault specified by the `OBSIDIAN` environment variable.
+The install script copies the compiled plugin files to the test vault specified by `OBSIDIAN` in the root `.env` file.
 
 ## Layout
 

@@ -18,11 +18,8 @@ main.js
 # obsidian
 data.json
 
+# Local environment configuration
+.env
+
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
-
-# Install scripts (local-only)
-install
-install.bat
-install.ps1
-install.mjs

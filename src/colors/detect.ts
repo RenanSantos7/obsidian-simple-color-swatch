@@ -116,3 +116,14 @@ export function findRenderedTextColors(
 	if (functions) matches.push(...collectFunctionMatches(text));
 	return matches.sort((a, b) => a.from - b.from);
 }
+
+/**
+ * Finds color candidates in code content, where unescaped hex values cannot be
+ * confused with Obsidian tags.
+ */
+export function findCodeColors(
+	text: string,
+	options: DetectOptions = {},
+): ColorMatch[] {
+	return findRenderedTextColors(text, options);
+}

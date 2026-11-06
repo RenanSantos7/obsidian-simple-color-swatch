@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	findCodeColors,
 	findEditorTextColors,
 	findRenderedTextColors,
 	matchInlineColor,
@@ -92,6 +93,21 @@ describe('matchInlineColor (inline code content)', () => {
 			expect(matchInlineColor(content)).toBeNull();
 		},
 	);
+});
+
+describe('colors inside code content', () => {
+	it('finds hex colors embedded in inline or block code', () => {
+		expect(findCodeColors('color: #ff0000;')).toEqual([
+			{ from: 7, to: 14, color: '#ff0000' },
+		]);
+	});
+
+	it('finds multiple supported color formats in code', () => {
+		expect(findCodeColors('a #fff; b rgb(1, 2, 3)')).toEqual([
+			{ from: 2, to: 6, color: '#fff' },
+			{ from: 10, to: 22, color: 'rgb(1, 2, 3)' },
+		]);
+	});
 });
 
 describe('options and multiple matches', () => {

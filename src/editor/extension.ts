@@ -9,7 +9,7 @@ import {
 	ViewUpdate,
 	WidgetType,
 } from '@codemirror/view';
-import { findEditorTextColors, matchInlineColor } from '../colors/detect';
+import { findCodeColors, findEditorTextColors } from '../colors/detect';
 import { isValidCssColor } from '../colors/validate';
 
 export interface EditorColorSwatchOptions {
@@ -74,43 +74,85 @@ function buildDecorations(
 	if (!options.enabled || !isLivePreview(app, view)) return Decoration.none;
 
 	const widgets: { pos: number; deco: Decoration }[] = [];
+	const codeRanges: { from: number; to: number }[] = [];
+	const scannedCodeRanges = new Set<string>();
+	const widgetPositions = new Set<number>();
 
 	for (const { from, to } of view.visibleRanges) {
-		const inlineCodeRanges: { from: number; to: number }[] = [];
+		const addCodeMatches = (text: string, offset: number) => {
+			for (const match of findCodeColors(text, {
+				hex: options.hex,
+				functions: options.functions,
+			})) {
+				if (!isValidCssColor(match.color)) continue;
+				const pos = offset + match.from;
+				if (widgetPositions.has(pos)) continue;
+				widgetPositions.add(pos);
+				widgets.push({
+					pos,
+					deco: Decoration.widget({
+						widget: new SwatchWidget(match.color),
+						side: -1,
+					}),
+				});
+			}
+		};
 
 		syntaxTree(view.state).iterate({
 			from,
 			to,
 			enter(node) {
-				if (node.name.toLowerCase() !== 'inlinecode') return;
-				inlineCodeRanges.push({ from: node.from, to: node.to });
+				const nodeName = node.name.toLowerCase();
+				const isBlockCode =
+					nodeName.includes('fencedcode') || nodeName.includes('codeblock');
+				const isInlineCode =
+					nodeName.includes('code') &&
+					!isBlockCode &&
+					!nodeName.includes('codeinfo') &&
+					!nodeName.includes('codemark');
+				if (isInlineCode) {
+					const rangeKey = `${node.from}:${node.to}`;
+					if (scannedCodeRanges.has(rangeKey)) return;
+					scannedCodeRanges.add(rangeKey);
+					codeRanges.push({ from: node.from, to: node.to });
 
-				const nodeText = view.state.doc.sliceString(node.from, node.to);
-				const opening = nodeText.match(/^`+/)?.[0];
-				const closing = nodeText.match(/`+$/)?.[0];
-				if (!opening || !closing || opening.length + closing.length > nodeText.length) {
+					const nodeText = view.state.doc.sliceString(node.from, node.to);
+					const opening = nodeText.match(/^`+/)?.[0];
+					const closing = nodeText.match(/`+$/)?.[0];
+					let contentFrom = node.from;
+					let contentTo = node.to;
+					if (
+						opening &&
+						closing &&
+						opening.length + closing.length <= nodeText.length
+					) {
+						contentFrom += opening.length;
+						contentTo -= closing.length;
+					}
+
+					if (contentFrom >= contentTo) return;
+
+					addCodeMatches(
+						view.state.doc.sliceString(contentFrom, contentTo),
+						contentFrom,
+					);
 					return;
 				}
 
-				const contentFrom = node.from + opening.length;
-				const contentTo = node.to - closing.length;
-				if (contentFrom >= contentTo) return;
-
-				const content = view.state.doc.sliceString(contentFrom, contentTo);
-				const color = matchInlineColor(content, {
-					hex: options.hex,
-					functions: options.functions,
-				});
-				if (!color || !isValidCssColor(color)) return;
-
-				const leading = content.length - content.trimStart().length;
-				widgets.push({
-					pos: contentFrom + leading,
-					deco: Decoration.widget({
-						widget: new SwatchWidget(color),
-						side: -1,
-					}),
-				});
+				if (!isBlockCode) return;
+				const rangeKey = `${node.from}:${node.to}`;
+				if (scannedCodeRanges.has(rangeKey)) return;
+				scannedCodeRanges.add(rangeKey);
+				codeRanges.push({ from: node.from, to: node.to });
+				const code = view.state.doc.sliceString(node.from, node.to);
+				let lineOffset = 0;
+				for (const line of code.split('\n')) {
+					// Fence markers and their optional language identifier are not code.
+					if (!/^\s{0,3}(?:`{3,}|~{3,})/.test(line)) {
+						addCodeMatches(line, node.from + lineOffset);
+					}
+					lineOffset += line.length + 1;
+				}
 			},
 		});
 
@@ -123,10 +165,10 @@ function buildDecorations(
 			if (!isValidCssColor(match.color)) continue;
 			const absFrom = from + match.from;
 			const absTo = from + match.to;
-			const insideInlineCode = inlineCodeRanges.some(
+			const insideCode = codeRanges.some(
 				(r) => absFrom >= r.from && absTo <= r.to,
 			);
-			if (insideInlineCode) continue;
+			if (insideCode) continue;
 			widgets.push({
 				pos: absFrom,
 				deco: Decoration.widget({

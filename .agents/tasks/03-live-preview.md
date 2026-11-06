@@ -11,9 +11,9 @@ Color swatches render in the editor per the recognition rules — **Live Preview
 - [x] Create `src/editor/extension.ts`:
   - [x] `SwatchWidget extends WidgetType`: `toDOM()` returns `<span class="scs-swatch">` with `backgroundColor` set to the color; `eq()` compares by color string.
   - [x] `ViewPlugin` building a `DecorationSet` over `view.visibleRanges`:
-    - [x] Iterate `syntaxTree(view.state)` for `InlineCode` nodes intersecting the visible ranges; test inner content (between the backtick runs) with `matchInlineColor`; widget at the start of the color text (right after the opening backticks), `Decoration.widget({ side: -1 })`.
+    - [x] Iterate `syntaxTree(view.state)` for inline and block code nodes intersecting the visible ranges; scan code content for color candidates and add widgets immediately before each match.
     - [x] Scan visible text with `findEditorTextColors` (escaped hex + functions); validate each candidate with `isValidCssColor`; widget before the color text (for escaped hex, before the `#` — after the backslash).
-    - [x] Skip plain-text matches inside `InlineCode` nodes (inline code is handled exclusively by the inline rule — avoids duplicate widgets for `` `rgb(1,2,3)` ``).
+    - [x] Skip plain-text matches inside inline and block code nodes (code is handled exclusively by code-context scanning).
     - [x] Build with `RangeSetBuilder` (sorted ranges).
   - [x] Source-mode guard: return `Decoration.none` when the owning markdown view is in Source mode. Detect the mode per editor (private API `currentMode.sourceMode` on the `MarkdownView`, isolated in one helper) and re-check on every `update()` so toggling between Source and Live Preview refreshes the decorations.
   - [x] Rebuild decorations on `docChanged` or `viewportChanged`.
@@ -32,6 +32,8 @@ Color swatches render in the editor per the recognition rules — **Live Preview
 In a note (Live Preview), swatches appear for:
 
 - [x] `` `#fff` ``, `` `#ff000080` `` (inline code, only the color)
+- [x] `` `color: #ff0000` `` (hex embedded in inline code)
+- [x] Hex colors and CSS functions inside fenced or indented code blocks
 - [x] `\#ff0000` (escaped, plain text)
 - [x] `rgb(255, 0, 0)`, `oklch(0.7 0.15 180)` (plain text)
 
