@@ -1,15 +1,18 @@
 import { readFileSync, writeFileSync } from 'fs';
 
-const targetVersion = process.env.npm_package_version;
-
-// read minAppVersion from manifest.json and bump version to target version
+const packageInfo = JSON.parse(readFileSync('package.json', 'utf-8'));
 const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
 const { minAppVersion } = manifest;
+
+const [major, minor, patch] = packageInfo.version.split('.');
+const targetVersion = [major, minor, Number(patch) + 1].join('.');
+
+packageInfo.version = targetVersion;
+writeFileSync('package.json', JSON.stringify(packageInfo, null, '\t'));
+
 manifest.version = targetVersion;
 writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t'));
 
-// update versions.json with target version and minAppVersion from manifest.json
-// but only if the target version is not already in versions.json
 const versions = JSON.parse(readFileSync('versions.json', 'utf8'));
 if (!(targetVersion in versions)) {
 	versions[targetVersion] = minAppVersion;
