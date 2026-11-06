@@ -18,3 +18,5 @@ if (!(targetVersion in versions)) {
 	versions[targetVersion] = minAppVersion;
 	writeFileSync('versions.json', JSON.stringify(versions, null, '\t'));
 }
+
+console.log(`⬆️ Versão atualizada para ${targetVersion}`);
