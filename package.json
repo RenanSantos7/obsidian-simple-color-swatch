@@ -1,6 +1,7 @@
 {
 	"name": "obsidian-simple-color-swatch",
 	"version": "1.0.1",
+	"packageManager": "pnpm@11.1.2",
 	"description": "Obsidian plugin that shows a color swatch next to CSS color codes, like VS Code.",
 	"main": "main.js",
 	"type": "module",
