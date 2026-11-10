@@ -3,6 +3,7 @@
 	display: inline-block;
 	width: var(--swatch-size);
 	height: var(--swatch-size);
+	background-color: var(--scs-swatch-color);
 	border-radius: var(--radius-s);
 	border: 1px solid var(--background-modifier-border);
 	margin-inline-end: 0.25em;

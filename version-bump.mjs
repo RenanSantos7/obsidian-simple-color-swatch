@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs';
+import { execSync } from 'child_process';
 
 const packageInfo = JSON.parse(readFileSync('package.json', 'utf-8'));
 const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
@@ -19,4 +20,9 @@ if (!(targetVersion in versions)) {
 	writeFileSync('versions.json', JSON.stringify(versions, null, '\t'));
 }
 
+execSync('git add package.json manifest.json versions.json', { stdio: 'inherit' });
+execSync(`git commit -m "🔖 chore: release ${targetVersion}"`, { stdio: 'inherit' });
+execSync(`git tag ${targetVersion}`, { stdio: 'inherit' });
+
 console.log(`⬆️ Versão atualizada para ${targetVersion}`);
+console.log(`Tag ${targetVersion} criada. Para publicar: git push origin HEAD ${targetVersion}`);

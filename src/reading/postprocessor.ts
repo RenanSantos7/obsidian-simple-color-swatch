@@ -13,9 +13,8 @@ function hasSwatch(element: Element): boolean {
 }
 
 function createSwatch(color: string): HTMLSpanElement {
-	const swatch = document.createElement('span');
-	swatch.className = 'scs-swatch';
-	swatch.style.backgroundColor = color;
+	const swatch = createSpan({ cls: 'scs-swatch' });
+	swatch.setCssProps({ '--scs-swatch-color': color });
 	return swatch;
 }
 
